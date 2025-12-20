@@ -12,34 +12,51 @@ Car car;
 
 std::vector<Box> boxes;
 std::vector<NGon> barriers;
+std::vector<Line> lines;
 
 bool justPressed = false;
 
 void setup() {
     M5Cardputer.begin();
     Serial.begin(9600);
-    car.init(-40, -40);
-    boxes.push_back(Box().init(0, 0, 10, 10, 45, TFT_GREEN));
-    boxes.push_back(Box().init(-90, 0, 20, 200, 0, TFT_DARKGREY));   // left
-    boxes.push_back(Box().init(90, 0, 20, 200, 0, TFT_DARKGREY));    // right
-    boxes.push_back(Box().init(0, -100, 20, 200, 90, TFT_DARKGREY));  // top
-	NGon barrier;
+    car.init(-40, -40, 90);
+
+    // test objects
+    boxes.push_back(Box().init(0, 0, 25, 25, 45, TFT_DARKGREY));
+    boxes.push_back(Box().init(-90, 0, 20, 200, 0, TFT_BROWN));   // left
+    boxes.push_back(Box().init(0, -90, 20, 200, 100, TFT_BROWN));  // top
+
+    NGon barrier(TFT_RED);
 	barrier.corners.push_back(Pos2D(-200, 200));
 	barrier.corners.push_back(Pos2D(0, 300));
 	barrier.corners.push_back(Pos2D(200, 200));
 	barrier.corners.push_back(Pos2D(200, -200));
 	barrier.corners.push_back(Pos2D(-200, -200));
 	barriers.push_back(barrier);
+
+
+    Line line(TFT_RED);
+    line.points.push_back(Pos2D(10, 10));
+    line.points.push_back(Pos2D(20, 40));
+    line.points.push_back(Pos2D(30, 90));
+    line.points.push_back(Pos2D(40, 160));
+    line.points.push_back(Pos2D(0, 300));
+    lines.push_back(line);
+
+    line.points.clear();
+    line.points.push_back(Pos2D(-40, 160));
+    line.points.push_back(Pos2D(-80, 100));
+    lines.push_back(line);
 }
 
 void loop() {
     M5Cardputer.update();
-    car.tick(boxes, barriers);
+    car.tick(boxes, barriers, lines);
     M5Canvas canvas(&M5.Lcd);
 
+    car.handbrake = false;
     if (M5Cardputer.Keyboard.isPressed()) {
         const auto state = M5Cardputer.Keyboard.keysState();
-        car.handbrake = false;
         for (const char i : state.word) {
             switch (i) {
                 case 'w':
@@ -49,10 +66,13 @@ void loop() {
                     car.steerLeft();
                     break;
                 case 'a':
-                    car.brake();
+                    car.backward();
                     break;
                 case '.':
                     car.steerRight();
+                    break;
+                case 'q':
+                    car.brake();
                     break;
                 case 'e':
                     car.handbrake = true;
@@ -66,18 +86,22 @@ void loop() {
     canvas.setTextColor(TFT_WHITE, TFT_BLACK);
     canvas.setTextSize(1);
 
-    car.draw(&canvas, car.posX - M5Cardputer.Lcd.width() / 2, car.posY - M5Cardputer.Lcd.height() / 2);
-    for (Box box : boxes) {
-        box.draw(&canvas, car.posX - M5Cardputer.Lcd.width() / 2, car.posY - M5Cardputer.Lcd.height() / 2);
-    }
-	for (NGon barrier : barriers) {
-		barrier.drawOutline(&canvas, car.posX - M5Cardputer.Lcd.width() / 2, car.posY - M5Cardputer.Lcd.height() / 2);
-	}
+    const float
+        camposX = car.posX - M5Cardputer.Lcd.width() / 2,
+        camposY = car.posY - M5Cardputer.Lcd.height() / 2;
 
-    canvas.printf("x: %.2f y: %.2f\n", car.posX, car.posY);
-    canvas.printf("a: %.2f v: %.2f\n", car.angle, car.velocity);
-    canvas.printf("s: %.2f\nf: %.2f\n", car.steer, car.appliedForce);
-    canvas.printf("hb: %s\n", car.handbrake ? "ON" : "OFF");
+    car.draw(&canvas, camposX, camposY);
+    for (const Box& box : boxes) {
+        box.draw(&canvas, camposX, camposY);
+    }
+	for (const NGon& barrier : barriers) {
+		barrier.drawOutline(&canvas, camposX, camposY);
+	} 
+    for (const Line& line : lines) {
+        line.drawOutline(&canvas, camposX, camposY);
+    }
+    
+    car.drawUI(&canvas);
 
     canvas.pushSprite(0, 0);
     canvas.deleteSprite();
