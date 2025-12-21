@@ -35,7 +35,7 @@ float damp(const float value, const float step) {
 	return value;
 }
 
-void Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barriers, const std::vector<Line> &lines) {
+bool Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barriers, const std::vector<Line> &lines, const Line &finishLine) {
 	const float xvel = -cos((angle + 90) * DEG_TO_RAD), yvel = -sin((angle + 90) * DEG_TO_RAD);
 
 	const float lastPosX = posX;
@@ -66,6 +66,9 @@ void Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barri
 
 	NGon carNGon;
 	carNGon.fromRectangle(posX, posY, CAR_WIDTH, CAR_HEIGHT, angle);
+	if (NGonLineCollision(carNGon, finishLine)) {
+		return false;
+	}
 	for (const NGon &barrier: barriers) {
 		if (NGonCollision(carNGon, barrier))
 			collided = true;
@@ -81,6 +84,7 @@ void Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barri
 		posY = lastPosY;
 		angle = lastAngle;
 	}
+	return true;
 }
 
 void Car::gas() {

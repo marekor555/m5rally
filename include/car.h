@@ -16,7 +16,7 @@ class Car {
           angle = 90, velocity = 0, steer = 0;
     bool handbrake = false;
 
-    void tick(const std::vector<Box>& colliders, const std::vector<NGon>& barriers, const std::vector<Line>& lines);
+    bool tick(const std::vector<Box> &colliders, const std::vector<NGon> &barriers, const std::vector<Line> &lines, const Line &finishLine);
     void gas();
     void backward();
     void brake();
