@@ -1,6 +1,7 @@
 # m5rally
 
 A top-down 2D rally designed specifically for the **M5Cardputer**.
+Simple demo [here](https://youtu.be/X6U41WTBWvQ?si=-CZuq-CXeDYT13Un)
 
 ## Features
 
