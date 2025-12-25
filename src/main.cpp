@@ -11,6 +11,7 @@ bool justPressed = false;
 
 std::vector<String> options = {
 	"t - test level",
+	"f - first level",
 	"s - enter sleep",
 };
 
@@ -27,6 +28,8 @@ void loop() {
 			switch (key) {
 				case 't':
 					testLevel();
+				case 'f':
+					first();
 			}
 		}
 	}
