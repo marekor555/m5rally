@@ -19,8 +19,8 @@
 #define MAX_STEER 5.0
 #define HAND_EXT 10.0
 
-#define CAR_WIDTH 10
-#define CAR_HEIGHT 20
+#define CAR_WIDTH 7
+#define CAR_HEIGHT 14
 
 float moveToward(const float value, const float target, const float step) {
 	if (value < target) return value + step;
