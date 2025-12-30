@@ -9,4 +9,6 @@ void testLevel();
 
 void first();
 
+void second();
+
 #endif //M5RALLY_LEVELS_H
