@@ -9,14 +9,13 @@
 #include "box.h"
 #include "collision.h"
 
-#define ACCEL 0.1
-#define FRICTION 0.05
-#define MAX_FORCE 0.5
-#define MAX_VELOCITY 7
+#define ACCEL 80
+#define FRICTION 20
+#define MAX_VELOCITY 200.0
 
-#define WHEEL_FORCE 5.0
-#define WHEEL_BACKFORCE 0.5
-#define MAX_STEER 5.0
+#define WHEEL_FORCE 1600.0
+#define WHEEL_BACKFORCE 600.0
+#define MAX_STEER 200.0
 #define HAND_EXT 10.0
 
 #define CAR_WIDTH 7
@@ -35,27 +34,32 @@ float damp(const float value, const float step) {
 	return value;
 }
 
-bool Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barriers, const std::vector<Line> &lines, const Line &finishLine) {
+bool Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barriers, const std::vector<Line> &lines,
+				const Line &finishLine, const float delta) {
+	runTime += delta;
 	const float xvel = -cos((angle + 90) * DEG_TO_RAD), yvel = -sin((angle + 90) * DEG_TO_RAD);
 
 	const float lastPosX = posX;
 	const float lastPosY = posY;
 	const float lastAngle = angle;
 
-	posX += velocity * xvel;
-	posY += velocity * yvel;
+	posX += velocity * xvel * delta;
+	posY += velocity * yvel * delta;
 
 	if (velocity != 0) {
-		steer = damp(steer, WHEEL_BACKFORCE);
-		steer = constrain(steer, -MAX_STEER - handbrake * HAND_EXT, MAX_STEER + handbrake * HAND_EXT);
-		if (steer > 0)
-			angle += min(steer * (velocity > 0 ? 1.0 : -1.0), MAX_STEER + handbrake * HAND_EXT);
-		if (steer < 0)
-			angle += max(steer * (velocity > 0 ? 1.0 : -1.0), -MAX_STEER - handbrake * HAND_EXT);
-		angle = angle > 360 || angle < -360? 0 : angle;
+		steer = damp(steer, WHEEL_BACKFORCE * delta);
+		const float realMaxSteer = MAX_STEER + (handbrake ? HAND_EXT : 0);
+		steer = constrain(steer, -realMaxSteer, realMaxSteer);
+
+		const float rotationDir = (velocity > 0 ? 1.0f : -1.0f);
+		angle += steer * rotationDir * delta;
+
+		if (angle > 360) angle -= 360;
+		if (angle < 0) angle += 360;
 	}
-	if (handbrake) {
-		velocity = damp(velocity, FRICTION);
+	if (fabs(velocity) > 0) {
+		const float appliedFriction = handbrake ? (FRICTION * 3.0f) : FRICTION;
+		velocity = damp(velocity, appliedFriction * delta);
 	}
 
 	bool collided = false;
@@ -66,20 +70,19 @@ bool Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barri
 
 	NGon carNGon;
 	carNGon.fromRectangle(posX, posY, CAR_WIDTH, CAR_HEIGHT, angle);
-	if (NGonLineCollision(carNGon, finishLine)) {
-		return false;
-	}
+	if (NGonLineCollision(carNGon, finishLine)) return false;
+
 	for (const NGon &barrier: barriers) {
 		if (NGonCollision(carNGon, barrier))
 			collided = true;
 	}
-	for (const Line &line : lines) {
+	for (const Line &line: lines) {
 		if (NGonLineCollision(carNGon, line))
 			collided = true;
 	}
 	if (collided) {
-		velocity = -velocity/4;
-		steer = -steer/4;
+		velocity = -velocity * 0.5f;
+		steer = 0;
 		posX = lastPosX;
 		posY = lastPosY;
 		angle = lastAngle;
@@ -87,24 +90,24 @@ bool Car::tick(const std::vector<Box> &colliders, const std::vector<NGon> &barri
 	return true;
 }
 
-void Car::gas() {
-	velocity = moveToward(velocity, MAX_VELOCITY, ACCEL);
+void Car::gas(const float delta) {
+	velocity = moveToward(velocity, MAX_VELOCITY, ACCEL * delta);
 }
 
-void Car::backward() {
-	velocity = moveToward(velocity, -MAX_VELOCITY / 2, ACCEL);
+void Car::backward(const float delta) {
+	velocity = moveToward(velocity, -MAX_VELOCITY / 2, ACCEL * delta);
 }
 
-void Car::brake() {
-	velocity = moveToward(velocity, 0, ACCEL);
+void Car::brake(const float delta) {
+	velocity = moveToward(velocity, 0, ACCEL* delta);
 }
 
-void Car::steerLeft() {
-	steer = moveToward(steer, -MAX_STEER, WHEEL_FORCE);
+void Car::steerLeft(const float delta) {
+	steer = moveToward(steer, -MAX_STEER, WHEEL_FORCE * delta);
 }
 
-void Car::steerRight() {
-	steer = moveToward(steer, MAX_STEER, WHEEL_FORCE);
+void Car::steerRight(const float delta) {
+	steer = moveToward(steer, MAX_STEER, WHEEL_FORCE * delta);
 }
 
 void Car::init(const float x, const float y, const float a) {
@@ -126,10 +129,13 @@ void Car::draw(M5Canvas *display, const float camposX, const float camposY) cons
 	canvas.deleteSprite();
 }
 
-void Car::drawUI(M5Canvas *display) const {
+void Car::drawUI(M5Canvas *display, const float delta) const {
 	display->drawWideLine(
 		2, M5Cardputer.Display.height(),
-		2, static_cast<int>(M5Cardputer.Display.height() - M5Cardputer.Display.height() * (fabs(velocity) / MAX_VELOCITY)),
+		2, static_cast<int>(M5Cardputer.Display.height() - M5Cardputer.Display.height() * (
+								fabs(velocity) / MAX_VELOCITY)),
 		4.0, handbrake ? TFT_RED : TFT_GREENYELLOW);
-
+	display->setTextSize(1);
+	display->setTextColor(TFT_WHITE, TFT_BLACK);
+	display->drawRightString("T: " + String(runTime, 3), display->width(), 0);
 }

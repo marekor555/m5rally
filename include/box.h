@@ -14,6 +14,7 @@ public:
 	mutable uint16_t colorFill;
 
 	Box init(float x, float y, int w, int h, float a, uint16_t color);
+
 	void draw(M5Canvas *display, float camposX, float camposY) const;
 };
 

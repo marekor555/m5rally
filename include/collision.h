@@ -12,43 +12,50 @@
 #include "vector"
 
 class Pos2D {
-   public:
-    float x;
-    float y;
+public:
+	float x;
+	float y;
 
-    Pos2D(float ix = 0, float iy = 0) : x(ix), y(iy) {}
+	Pos2D(float ix = 0, float iy = 0) : x(ix), y(iy) {
+	}
 };
 
 class NGon {
-   public:
+public:
 	uint16_t color;
-    std::vector<Pos2D> corners;
+	std::vector<Pos2D> corners;
 
-	NGon(uint16_t color) : color(color) {}
-	NGon() : color(0) {}
+	NGon(uint16_t color) : color(color) {
+	}
 
-    void fromRectangle(float centerX, float centerY, float width, float height, float angle);
+	NGon() : color(0) {
+	}
 
-    void drawOutline(M5Canvas* display, float camposX, float camposY) const;
+	void fromRectangle(float centerX, float centerY, float width, float height, float angle);
+
+	void drawOutline(M5Canvas *display, float camposX, float camposY) const;
 };
 
 class Line {
-   public:
+public:
 	uint16_t color;
-    std::vector<Pos2D> points;
+	std::vector<Pos2D> points;
 
-	Line(uint16_t color) : color(color) {}
-	Line() : color(0) {}
+	Line(uint16_t color) : color(color) {
+	}
 
-    void drawOutline(M5Canvas* display, float camposX, float camposY) const;
+	Line() : color(0) {
+	}
+
+	void drawOutline(M5Canvas *display, float camposX, float camposY) const;
 };
 
-int orientation(const Pos2D& p, const Pos2D& q, const Pos2D& r);
+int orientation(const Pos2D &p, const Pos2D &q, const Pos2D &r);
 
 bool NGonCollision(const NGon &n1, const NGon &n2);
 
 bool NGonLineCollision(const NGon &n, const Line &l);
 
 bool collision(float x1, float y1, float w1, float h1, float a1,
-               float x2, float y2, float w2, float h2, float a2);
+				float x2, float y2, float w2, float h2, float a2);
 #endif  // M5RALLY_COLLISON_H
