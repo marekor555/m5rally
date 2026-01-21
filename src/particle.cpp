@@ -1,0 +1,39 @@
+#include "particle.h"
+
+
+void Particle::tick(const float delta) {
+	time += delta;
+}
+
+void Particle::draw(M5Canvas *display, const float camposX, const float camposY) const {
+
+	display->fillSmoothCircle(position.x - camposX, position.y - camposY, radius*((lifetime-time)/lifetime), color);
+}
+
+void ParticleSpawner::spawn(const int x, const int y, const int radius, const float lifetime, const uint16_t color) {
+	if (particles.size() >= maxParticles) return;
+	Particle particle(x, y, lifetime, radius, color);
+	particles.emplace_back(particle);
+}
+
+bool ParticleSpawner::tick(const float delta) {
+	for (int i = 0; i < particles.size(); i++) {
+		particles[i].tick(delta);
+		if (particles[i].time > particles[i].lifetime) {
+			particles[i--] = particles.back();
+			particles.pop_back();
+		}
+	}
+	sinceSpawned+=delta;
+	if (sinceSpawned > spawnDelay) {
+		sinceSpawned = 0;
+		return true;
+	}
+	return false;
+}
+
+void ParticleSpawner::draw(M5Canvas *display, const float camposX, const float camposY) const {
+	for (const Particle &particle : particles) {
+		particle.draw(display, camposX, camposY);
+	}
+}

@@ -4,18 +4,21 @@
 
 #include "car.h"
 #include "collision.h"
+#include "particle.h"
 
 #define GROUND_COLOR M5GFX::color565(10, 50, 0)
 #define BARRIER_COLOR M5GFX::color565(255, 115, 0)
+#define BARRIER_INFILL M5GFX::color565(33, 33, 33)
 #define OBJ_COLOR M5GFX::color565(82, 48, 0)
 #define FINISH_COLOR M5GFX::color565(149, 255, 0)
 
 #define FRAME_TIME_MS 10 // 16ms -> abt. 60 fps
-
+#define MAX_CAR_PARTICLES 400
 
 void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &barriers, const std::vector<Line> &lines,
 			const Line &finishLine) {
 	unsigned long frameStart = millis();
+	ParticleSpawner particle_spawner(MAX_CAR_PARTICLES, 0);
 	while (true) {
 		const unsigned long now = millis();
 		float delta = static_cast<float>(now - frameStart) / 1000;
@@ -23,7 +26,9 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 		frameStart = now;
 
 		if (!car.tick(boxes, barriers, lines, finishLine, delta)) break;
-
+		if (particle_spawner.tick(delta)) {
+			particle_spawner.spawn(car.posX, car.posY, 3, 7, TFT_BLACK);
+		}
 		M5Cardputer.update();
 		M5Canvas canvas(&M5.Lcd);
 
@@ -53,7 +58,6 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 				}
 			}
 		}
-
 		canvas.createSprite(240, 135);
 		canvas.fillScreen(GROUND_COLOR);
 		canvas.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -63,17 +67,21 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 				camposX = car.posX - M5Cardputer.Lcd.width() / 2,
 				camposY = car.posY - M5Cardputer.Lcd.height() / 2;
 
-		car.draw(&canvas, camposX, camposY);
+
+		for (const NGon &barrier: barriers) {
+			barrier.drawInfill(&canvas, camposX, camposY);
+			barrier.drawOutline(&canvas, camposX, camposY);
+		}
 		for (const Box &box: boxes) {
 			box.draw(&canvas, camposX, camposY);
-		}
-		for (const NGon &barrier: barriers) {
-			barrier.drawOutline(&canvas, camposX, camposY);
 		}
 		for (const Line &line: lines) {
 			line.drawOutline(&canvas, camposX, camposY);
 		}
 		finishLine.drawOutline(&canvas, camposX, camposY);
+		particle_spawner.draw(&canvas, camposX, camposY);
+
+		car.draw(&canvas, camposX, camposY);
 
 		car.drawUI(&canvas, delta);
 
@@ -113,7 +121,7 @@ void testLevel() {
 	boxes.push_back(Box().init(-90, 0, 20, 200, 0, OBJ_COLOR)); // left
 	boxes.push_back(Box().init(0, -90, 20, 200, 100, OBJ_COLOR)); // top
 
-	NGon barrier(BARRIER_COLOR);
+	NGon barrier(BARRIER_COLOR, BARRIER_INFILL);
 	barrier.corners.push_back(Pos2D(-200, 200));
 	barrier.corners.push_back(Pos2D(0, 300));
 	barrier.corners.push_back(Pos2D(200, 200));
@@ -152,7 +160,7 @@ void first() {
 
 	boxes.push_back(Box().init(471, 647, 16, 16, 45, OBJ_COLOR));
 
-	NGon barrier(BARRIER_COLOR);
+	NGon barrier(BARRIER_COLOR, BARRIER_INFILL);
 	barrier.corners.push_back(Pos2D(32, 991));
 	barrier.corners.push_back(Pos2D(79, 991));
 	barrier.corners.push_back(Pos2D(70, 844));
@@ -211,7 +219,7 @@ void second() {
 
 	car.init(70, 500, 0);
 
-	NGon barrier(BARRIER_COLOR);
+	NGon barrier(BARRIER_COLOR, BARRIER_INFILL);
 	barrier.corners = {
 		Pos2D(34, 532), Pos2D(133, 533), Pos2D(148, 452), Pos2D(123, 368),
 		Pos2D(155, 277), Pos2D(211, 209), Pos2D(231, 89), Pos2D(307, 84),

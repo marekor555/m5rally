@@ -23,17 +23,21 @@ public:
 class NGon {
 public:
 	uint16_t color;
+	uint16_t infillColor;
 	std::vector<Pos2D> corners;
 
 	NGon(uint16_t color) : color(color) {
 	}
+	NGon(uint16_t color, uint16_t infillColor) : color(color), infillColor(infillColor) {
+	}
 
-	NGon() : color(0) {
+	NGon() : color(0), infillColor(0) {
 	}
 
 	void fromRectangle(float centerX, float centerY, float width, float height, float angle);
 
 	void drawOutline(M5Canvas *display, float camposX, float camposY) const;
+	void drawInfill(M5Canvas *display, float camposX, float camposY) const;
 };
 
 class Line {

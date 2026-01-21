@@ -19,19 +19,49 @@ void NGon::fromRectangle(float cx, float cy, float w, float h, float angle) {
 
 void NGon::drawOutline(M5Canvas *display, const float camposX, const float camposY) const {
 	display->drawWideLine(corners[0].x - camposX, corners[0].y - camposY, corners[corners.size() - 1].x - camposX,
-							corners[corners.size() - 1].y - camposY, 2,
-							color);
+						corners[corners.size() - 1].y - camposY, 2,
+						color);
 
 	for (int i = 1; i < corners.size(); ++i) {
 		display->drawWideLine(corners[i - 1].x - camposX, corners[i - 1].y - camposY, corners[i].x - camposX,
-								corners[i].y - camposY, 2, color);
+							corners[i].y - camposY, 2, color);
+	}
+}
+
+void NGon::drawInfill(M5Canvas *display, const float camposX, const float camposY) const {
+	if (corners.size() < 3) return;
+
+	int minY = corners[0].y, maxY = corners[0].y;
+	for (int i = 1; i < corners.size(); i++) {
+		if (corners[i].y < minY) minY = corners[i].y;
+		if (corners[i].y > maxY) maxY = corners[i].y;
+	}
+
+	minY = std::max(minY, (int)camposY);
+	maxY = std::min(maxY, (int)camposY+135);
+
+	for (int y = minY; y <= maxY; y++) {
+		std::vector<int> xPoints;
+		for (int i = 0; i < corners.size(); i++) {
+			const Pos2D &p1 = corners[i];
+			const Pos2D &p2 = corners[(i + 1) % corners.size()];
+
+			if ((p1.y < y && p2.y >= y) ||
+				(p2.y < y && p1.y >= y)) {
+				xPoints.push_back(p1.x + ((y - p1.y) / (p2.y - p1.y)) * (p2.x - p1.x));
+			}
+		}
+
+		std::sort(xPoints.begin(), xPoints.end());
+		for (int i = 0; i < xPoints.size(); i += 2)
+			display->drawFastHLine(xPoints[i] - camposX, y - camposY, xPoints[i + 1] - xPoints[i], infillColor);
 	}
 }
 
 void Line::drawOutline(M5Canvas *display, const float camposX, const float camposY) const {
 	for (int i = 1; i < points.size(); ++i) {
 		display->drawWideLine(points[i - 1].x - camposX, points[i - 1].y - camposY, points[i].x - camposX,
-								points[i].y - camposY, 2, color);
+							points[i].y - camposY, 2, color);
 	}
 }
 
