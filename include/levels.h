@@ -13,4 +13,6 @@ void first();
 
 void second();
 
+void greenHell();
+
 #endif //M5RALLY_LEVELS_H

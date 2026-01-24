@@ -11,6 +11,7 @@ bool justPressed = false;
 
 std::vector<String> options = {
 	"Load level",
+	"Green hell (GT)",
 	"Test level",
 	"First level",
 	"Second level",
@@ -27,6 +28,7 @@ void enterSleep() {
 
 void (*results[])() = {
 	loadLevel,
+	greenHell,
 	testLevel,
 	first,
 	second,

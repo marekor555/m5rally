@@ -14,6 +14,29 @@ void debounceKeyboard() {
 	}
 }
 
+bool isVisible(const float x, const float y, const float camposX, const float camposY, const float margin) {
+    const float screenX = x - camposX, screenY = y - camposY;
+
+    return
+        screenX >= -margin && screenX < M5Cardputer.Display.width() + margin &&
+        screenY >= -margin && screenY < M5Cardputer.Display.height() + margin;
+}
+
+bool intersectScreen(const float x1, const float y1, const float x2, const float y2, const float camposX, const float camposY) {
+    const float
+        right  = camposX + M5Cardputer.Display.width(),
+        bottom = camposY + M5Cardputer.Display.height(),
+        left   = camposX,
+        top    = camposY;
+
+    if (max(x1, x2) < left)   return false;
+    if (min(x1, x2) > right)  return false;
+    if (max(y1, y2) < top)    return false;
+    if (min(y1, y2) > bottom) return false;
+
+    return true;
+}
+
 String scrollTextArrHighlight(const std::vector<String> msg, bool scrollX, int mainColor, int extraColor) {
     debounceKeyboard();
     M5Cardputer.Lcd.setTextColor(mainColor);
