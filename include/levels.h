@@ -5,6 +5,8 @@
 #ifndef M5RALLY_LEVELS_H
 #define M5RALLY_LEVELS_H
 
+void loadLevel();
+
 void testLevel();
 
 void first();

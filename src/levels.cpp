@@ -1,10 +1,14 @@
 #include <Arduino.h>
 #include <M5Cardputer.h>
 #include <M5GFX.h>
+#include <SPI.h>
+#include <SD.h>
+#include <ArduinoJson.h>
 
 #include "car.h"
 #include "collision.h"
 #include "particle.h"
+#include "utils.h"
 
 #define GROUND_COLOR M5GFX::color565(10, 50, 0)
 #define BARRIER_COLOR M5GFX::color565(255, 115, 0)
@@ -102,6 +106,118 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 	while (M5Cardputer.Keyboard.isPressed()) M5Cardputer.update();
 	while (!M5Cardputer.Keyboard.isPressed()) M5Cardputer.update();
 }
+
+/* example json level
+{
+  "car": { "x": -40, "y": -40, "angle": 90 },
+  "boxes": [
+	{ "x": 0, "y": 0, "w": 25, "h": 25, "angle": 45 }
+  ],
+  "barriers": [
+	{
+	  "points": [
+		{"x": -200, "y": 200},
+		{"x": 0, "y": 300},
+		{"x": 200, "y": 200}
+	  ]
+	}
+  ],
+  "finishLine": [
+	{"x": 40, "y": 160},
+	{"x": -40, "y": 160}
+  ]
+}
+ */
+
+void parseAndRun(String json) {
+	JsonDocument doc;
+	const DeserializationError error = deserializeJson(doc, json);
+
+	if (error) return;
+
+	Car car;
+	std::vector<Box> boxes;
+	std::vector<NGon> barriers;
+	std::vector<Line> lines;
+	Line finishLine(FINISH_COLOR);
+
+	car.init(doc["car"]["x"], doc["car"]["y"], doc["car"]["angle"]);
+
+	JsonArray boxesJson = doc["boxes"];
+	for (JsonObject box : boxesJson) {
+		boxes.push_back(Box().init(box["x"], box["y"], box["w"], box["h"], box["angle"], OBJ_COLOR));
+	}
+
+	JsonArray barriersJson = doc["barriers"];
+	for (JsonObject box : barriersJson) {
+		NGon barrier(BARRIER_COLOR, BARRIER_INFILL);
+
+		for (JsonObject point : box["points"].as<JsonArray>()) {
+			barrier.corners.push_back(Pos2D(point["x"], point["y"]));
+		}
+
+		barriers.push_back(barrier);
+	}
+
+	for (JsonObject point : doc["finishLine"].as<JsonArray>()) {
+		finishLine.points.push_back(Pos2D(point["x"], point["y"]));
+	}
+
+	runLevel(car, boxes, barriers, lines, finishLine);
+}
+
+void loadLevel() {
+	debounceKeyboard();
+	std::vector<String> files;
+	String view = "/";
+	SPI.begin(40, 39, 14, 12);
+	while (!SD.begin(12, SPI)) {}
+
+	while (true) {
+		File root = SD.open(view);
+		files.clear();
+		if (view == "/") files.push_back("||-exit-||");
+		if (view != "/") files.push_back("|..|");
+		File file = root.openNextFile();
+		while (file) {
+			if (file.isDirectory()) {
+				files.push_back("|"+String(file.name())+"|");
+			}
+			file = root.openNextFile();
+		}
+		root = SD.open(view);
+		file = root.openNextFile();
+		while (file) {
+			if (!file.isDirectory()) {
+				files.push_back(String(file.name()));
+			}
+			file = root.openNextFile();
+		}
+
+		String filename = scrollTextArrHighlight(files, true, TFT_WHITE, TFT_BLUE);
+		if (filename == "||-exit-||") {
+			SD.end();
+			return;
+		} if (filename == "|..|") {
+			view = view.substring(0, view.lastIndexOf("/"));
+		} else {
+			if (filename.startsWith("|") && filename.endsWith("|")) {
+				filename = filename.substring(1, filename.length()-1);
+			}
+			File selectedFile = SD.open(view + "/" + filename);
+			if (selectedFile.isDirectory()) {
+				view += "/" + filename;
+			} else {
+				String content = selectedFile.readString();
+				selectedFile.close();
+
+				parseAndRun(content);
+				return;
+			}
+		}
+	}
+}
+
 
 
 void testLevel() {
