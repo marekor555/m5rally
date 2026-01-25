@@ -12,9 +12,10 @@ bool justPressed = false;
 std::vector<String> options = {
 	"Load level",
 	"Green hell (GT)",
+	"Italian chicane (GT)",
+	"Thread the needle",
+	"The loop",
 	"Test level",
-	"First level",
-	"Second level",
 	"Enter sleep",
 };
 
@@ -29,9 +30,10 @@ void enterSleep() {
 void (*results[])() = {
 	loadLevel,
 	greenHell,
+	italianChicane,
+	threadTheNeedle,
+	theLoop,
 	testLevel,
-	first,
-	second,
 	enterSleep,
 };
 

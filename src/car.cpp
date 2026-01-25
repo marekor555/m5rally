@@ -99,7 +99,7 @@ void Car::backward(const float delta) {
 }
 
 void Car::brake(const float delta) {
-	velocity = moveToward(velocity, 0, ACCEL* delta);
+	velocity = moveToward(velocity, 0, ACCEL * delta);
 }
 
 void Car::steerLeft(const float delta) {

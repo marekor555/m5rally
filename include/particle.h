@@ -32,6 +32,7 @@ public:
 	void spawn(int x, int y, int radius, float lifetime, uint16_t color);
 	bool tick(float delta);
 	void draw(M5Canvas *display, float camposX, float camposY) const;
+	void drawLine(M5Canvas *display, float camposX, float camposY, float width) const;
 };
 
 #endif //M5RALLY_PARTICLE_H

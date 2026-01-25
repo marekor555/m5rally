@@ -83,7 +83,7 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 			line.drawOutline(&canvas, camposX, camposY);
 		}
 		finishLine.drawOutline(&canvas, camposX, camposY);
-		particle_spawner.draw(&canvas, camposX, camposY);
+		particle_spawner.drawLine(&canvas, camposX, camposY, 3);
 
 		car.draw(&canvas, camposX, camposY);
 
@@ -107,13 +107,13 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 	while (!M5Cardputer.Keyboard.isPressed()) M5Cardputer.update();
 }
 
-void parseAndRun(const char* json) {
+void parseAndRun(const char *json) {
 	JsonDocument doc;
 	const DeserializationError error = deserializeJson(doc, json, DeserializationOption::NestingLimit(50));
 
 	if (error) {
 		M5Cardputer.Display.fillScreen(TFT_BLACK);
-		M5Cardputer.Display.setCursor(0,0);
+		M5Cardputer.Display.setCursor(0, 0);
 		M5Cardputer.Display.printf("JSON Error: %s\n", error.c_str());
 		int len = strlen(json);
 		M5Cardputer.Display.printf("Len: %d\n", len);
@@ -131,15 +131,15 @@ void parseAndRun(const char* json) {
 	car.init(doc["car"]["x"], doc["car"]["y"], doc["car"]["angle"]);
 
 	JsonArray boxesJson = doc["boxes"];
-	for (JsonObject box : boxesJson) {
+	for (JsonObject box: boxesJson) {
 		boxes.push_back(Box().init(box["x"], box["y"], box["w"], box["h"], box["angle"], OBJ_COLOR));
 	}
 
 	JsonArray barriersJson = doc["barriers"];
-	for (JsonObject box : barriersJson) {
+	for (JsonObject box: barriersJson) {
 		NGon barrier(BARRIER_COLOR, BARRIER_INFILL);
 
-		for (JsonObject point : box["points"].as<JsonArray>()) {
+		for (JsonObject point: box["points"].as<JsonArray>()) {
 			barrier.corners.push_back(Pos2D(point["x"], point["y"]));
 		}
 
@@ -147,10 +147,10 @@ void parseAndRun(const char* json) {
 	}
 
 	JsonArray linesJson = doc["lines"];
-	for (JsonObject line_ : linesJson) {
+	for (JsonObject line_: linesJson) {
 		Line line(BARRIER_COLOR);
 
-		for (JsonObject point : line_["points"].as<JsonArray>()) {
+		for (JsonObject point: line_["points"].as<JsonArray>()) {
 			line.points.push_back(Pos2D(point["x"], point["y"]));
 		}
 
@@ -158,7 +158,7 @@ void parseAndRun(const char* json) {
 	}
 
 
-	for (JsonObject point : doc["finishLine"].as<JsonArray>()) {
+	for (JsonObject point: doc["finishLine"].as<JsonArray>()) {
 		finishLine.points.push_back(Pos2D(point["x"], point["y"]));
 	}
 
@@ -170,7 +170,8 @@ void loadLevel() {
 	std::vector<String> files;
 	String view = "/";
 	SPI.begin(40, 39, 14, 12);
-	while (!SD.begin(12, SPI)) {}
+	while (!SD.begin(12, SPI)) {
+	}
 
 	while (true) {
 		File root = SD.open(view);
@@ -180,7 +181,7 @@ void loadLevel() {
 		File file = root.openNextFile();
 		while (file) {
 			if (file.isDirectory()) {
-				files.push_back("|"+String(file.name())+"|");
+				files.push_back("|" + String(file.name()) + "|");
 			}
 			file = root.openNextFile();
 		}
@@ -197,11 +198,12 @@ void loadLevel() {
 		if (filename == "||-exit-||") {
 			SD.end();
 			return;
-		} if (filename == "|..|") {
+		}
+		if (filename == "|..|") {
 			view = view.substring(0, view.lastIndexOf("/"));
 		} else {
 			if (filename.startsWith("|") && filename.endsWith("|")) {
-				filename = filename.substring(1, filename.length()-1);
+				filename = filename.substring(1, filename.length() - 1);
 			}
 			File selectedFile = SD.open(view + "/" + filename);
 			if (selectedFile.isDirectory()) {
@@ -216,7 +218,6 @@ void loadLevel() {
 		}
 	}
 }
-
 
 
 void testLevel() {
@@ -268,11 +269,12 @@ void testLevel() {
 	)");
 }
 
-void first() {
-	parseAndRun(R"({"car": {"x": 55, "y": 970, "angle": 0}, "boxes": [{"x": 471, "y": 647, "w": 16, "h": 16, "angle": 45}], "barriers": [{"points": [{"x": 32, "y": 991}, {"x": 79, "y": 991}, {"x": 70, "y": 844}, {"x": 86, "y": 799}, {"x": 128, "y": 735}, {"x": 256, "y": 737}, {"x": 255, "y": 1022}, {"x": 416, "y": 1022}, {"x": 432, "y": 1007}, {"x": 447, "y": 943}, {"x": 495, "y": 801}, {"x": 511, "y": 626}, {"x": 496, "y": 547}, {"x": 496, "y": 495}, {"x": 508, "y": 464}, {"x": 558, "y": 440}, {"x": 895, "y": 440}, {"x": 942, "y": 413}, {"x": 976, "y": 207}, {"x": 976, "y": 160}, {"x": 606, "y": 160}, {"x": 606, "y": 208}, {"x": 933, "y": 208}, {"x": 933, "y": 279}, {"x": 908, "y": 378}, {"x": 892, "y": 401}, {"x": 558, "y": 400}, {"x": 496, "y": 431}, {"x": 464, "y": 463}, {"x": 449, "y": 494}, {"x": 449, "y": 546}, {"x": 432, "y": 626}, {"x": 447, "y": 786}, {"x": 383, "y": 960}, {"x": 368, "y": 975}, {"x": 304, "y": 975}, {"x": 303, "y": 698}, {"x": 127, "y": 699}, {"x": 95, "y": 719}, {"x": 47, "y": 783}, {"x": 32, "y": 845}]}], "lines": [], "finishLine": [{"x": 608, "y": 160}, {"x": 608, "y": 208}]})");
+void threadTheNeedle() {
+	parseAndRun(
+		R"({"car": {"x": 55, "y": 970, "angle": 0}, "boxes": [{"x": 471, "y": 647, "w": 16, "h": 16, "angle": 45}], "barriers": [{"points": [{"x": 32, "y": 991}, {"x": 79, "y": 991}, {"x": 70, "y": 844}, {"x": 86, "y": 799}, {"x": 128, "y": 735}, {"x": 256, "y": 737}, {"x": 255, "y": 1022}, {"x": 416, "y": 1022}, {"x": 432, "y": 1007}, {"x": 447, "y": 943}, {"x": 495, "y": 801}, {"x": 511, "y": 626}, {"x": 496, "y": 547}, {"x": 496, "y": 495}, {"x": 508, "y": 464}, {"x": 558, "y": 440}, {"x": 895, "y": 440}, {"x": 942, "y": 413}, {"x": 976, "y": 207}, {"x": 976, "y": 160}, {"x": 606, "y": 160}, {"x": 606, "y": 208}, {"x": 933, "y": 208}, {"x": 933, "y": 279}, {"x": 908, "y": 378}, {"x": 892, "y": 401}, {"x": 558, "y": 400}, {"x": 496, "y": 431}, {"x": 464, "y": 463}, {"x": 449, "y": 494}, {"x": 449, "y": 546}, {"x": 432, "y": 626}, {"x": 447, "y": 786}, {"x": 383, "y": 960}, {"x": 368, "y": 975}, {"x": 304, "y": 975}, {"x": 303, "y": 698}, {"x": 127, "y": 699}, {"x": 95, "y": 719}, {"x": 47, "y": 783}, {"x": 32, "y": 845}]}], "lines": [], "finishLine": [{"x": 608, "y": 160}, {"x": 608, "y": 208}]})");
 }
 
-void second() {
+void theLoop() {
 	parseAndRun(R"({
 	  "car": { "x": 70, "y": 500, "angle": 0 },
 	  "boxes": [],
@@ -435,5 +437,21 @@ void greenHell() {
 		  ],
 		  "lines": [],
 		  "finishLine": [{"x":-695.0,"y":3631},{"x":-791.0,"y":3718.0}]})"
+	);
+}
+
+void italianChicane() {
+	parseAndRun(R"({
+		"car": { "x": 623.0, "y": 2211.0, "angle": -82.6 },
+		"boxes": [],
+		  "barriers": [
+		    {
+		      "points": [
+		        {"x":713.0,"y":2304.0},{"x":-1228.0,"y":2122.0},{"x":-1322.0,"y":1976.0},{"x":-1758.0,"y":2074.0},{"x":-2508.0,"y":2029.0},{"x":-2762.0,"y":1955.0},{"x":-2987.0,"y":1829.0},{"x":-3227.0,"y":1607.0},{"x":-3455.0,"y":1244.0},{"x":-3569.0,"y":822.0},{"x":-3612.0,"y":288.0},{"x":-3557.0,"y":165.0},{"x":-3343.0,"y":102.0},{"x":-3182.0,"y":-33.0},{"x":-3050.0,"y":-239.0},{"x":-3027.0,"y":-467.0},{"x":-3164.0,"y":-850.0},{"x":-3597.0,"y":-1033.0},{"x":-4128.0,"y":-1808.0},{"x":-4193.0,"y":-2012.0},{"x":-4111.0,"y":-2264.0},{"x":-3929.0,"y":-2399.0},{"x":-2962.0,"y":-2490.0},{"x":-2789.0,"y":-2450.0},{"x":-2711.0,"y":-2312.0},{"x":-2773.0,"y":-1998.0},{"x":-2767.0,"y":-1681.0},{"x":-2601.0,"y":-1439.0},{"x":-2374.0,"y":-1294.0},{"x":-2230.0,"y":-1348.0},{"x":-2117.0,"y":-1192.0},{"x":-2117.0,"y":-999.0},{"x":-1879.0,"y":-960.0},{"x":-1501.0,"y":-731.0},{"x":-1464.0,"y":-480.0},{"x":-1496.0,"y":-204.0},{"x":-1489.0,"y":23.0},{"x":-1375.0,"y":320.0},{"x":-1187.0,"y":527.0},{"x":-868.0,"y":731.0},{"x":-458.0,"y":851.0},{"x":-69.0,"y":768.0},{"x":92.0,"y":869.0},{"x":193.0,"y":1139.0},{"x":356.0,"y":1359.0},{"x":649.0,"y":1402.0},{"x":992.0,"y":1333.0},{"x":1182.0,"y":1324.0},{"x":1846.0,"y":1538.0},{"x":2190.0,"y":1571.0},{"x":2711.0,"y":1515.0},{"x":3406.9673,"y":1511.8365},{"x":3811.0,"y":1510.0},{"x":4015.0,"y":1592.0},{"x":4079.0,"y":1729.0},{"x":4077.0,"y":1916.0},{"x":3936.0,"y":2084.0},{"x":3501.0,"y":2297.0},{"x":3070.0,"y":2385.0},{"x":2476.0,"y":2359.0},{"x":1589.0,"y":2310.0},{"x":713.0,"y":2304.0},{"x":724.0,"y":2195.0},{"x":1606.0,"y":2229.0},{"x":2492.0,"y":2275.0},{"x":3054.0,"y":2286.0},{"x":3454.0,"y":2209.0},{"x":3777.0,"y":2057.0},{"x":3975.0,"y":1885.0},{"x":3980.0,"y":1730.0},{"x":3879.0,"y":1629.0},{"x":3398.4587,"y":1614.048},{"x":2722.0,"y":1593.0},{"x":2186.0,"y":1651.0},{"x":1816.0,"y":1621.0},{"x":1191.0,"y":1414.0},{"x":1026.0,"y":1423.0},{"x":642.0,"y":1515.0},{"x":323.0,"y":1459.0},{"x":87.0,"y":1196.0},{"x":16.0,"y":955.0},{"x":-106.0,"y":877.0},{"x":-458.0,"y":953.0},{"x":-917.0,"y":836.0},{"x":-1307.0,"y":593.0},{"x":-1517.0,"y":289.0},{"x":-1599.0,"y":30.0},{"x":-1607.0,"y":-288.0},{"x":-1572.0,"y":-481.0},{"x":-1612.0,"y":-693.0},{"x":-1929.0,"y":-862.0},{"x":-2148.0,"y":-847.0},{"x":-2265.0,"y":-967.0},{"x":-2214.0,"y":-1126.0},{"x":-2274.0,"y":-1215.0},{"x":-2421.0,"y":-1185.0},{"x":-2652.0,"y":-1330.0},{"x":-2792.0,"y":-1472.0},{"x":-2890.0,"y":-1667.0},{"x":-2890.0,"y":-2004.0},{"x":-2837.0,"y":-2283.0},{"x":-2859.0,"y":-2355.0},{"x":-2972.0,"y":-2388.0},{"x":-3915.0,"y":-2283.0},{"x":-4014.0,"y":-2207.0},{"x":-4069.0,"y":-2004.0},{"x":-4032.0,"y":-1825.0},{"x":-3535.0,"y":-1110.0},{"x":-3089.0,"y":-917.0},{"x":-2929.0,"y":-456.0},{"x":-2958.0,"y":-210.0},{"x":-3099.0,"y":3.0},{"x":-3257.0,"y":158.0},{"x":-3488.0,"y":229.0},{"x":-3521.0,"y":308.0},{"x":-3475.0,"y":813.0},{"x":-3365.0,"y":1229.0},{"x":-3111.0,"y":1598.0},{"x":-2772.0,"y":1857.0},{"x":-2474.0,"y":1937.0},{"x":-1767.0,"y":1988.0},{"x":-1270.0,"y":1863.0},{"x":-1143.0,"y":2023.0},{"x":724.0,"y":2195.0}
+		      ]
+		    }
+		  ],
+		  "lines": [],
+		  "finishLine": [{"x":741.0,"y":2195.0},{"x":730.0,"y":2304.0}]})"
 	);
 }

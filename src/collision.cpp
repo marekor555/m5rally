@@ -21,16 +21,17 @@ void NGon::fromRectangle(float cx, float cy, float w, float h, float angle) {
 
 void NGon::drawOutline(M5Canvas *display, const float camposX, const float camposY) const {
 	display->drawLine(corners[0].x - camposX, corners[0].y - camposY, corners[corners.size() - 1].x - camposX,
-						corners[corners.size() - 1].y - camposY,
-						color);
+					corners[corners.size() - 1].y - camposY,
+					color);
 
 	for (int i = 1; i < corners.size(); ++i) {
 		if (!isVisible(corners[i - 1].x, corners[i - 1].y, camposX, camposY, 10) &&
 			!isVisible(corners[i].x, corners[i].y, camposX, camposY, 10) &&
-			!intersectScreen(corners[i].x, corners[i].y, corners[i - 1].x, corners[i - 1].y, camposX, camposY)) continue;
+			!intersectScreen(corners[i].x, corners[i].y, corners[i - 1].x, corners[i - 1].y, camposX, camposY))
+			continue;
 
 		display->drawLine(corners[i - 1].x - camposX, corners[i - 1].y - camposY, corners[i].x - camposX,
-							corners[i].y - camposY, color);
+						corners[i].y - camposY, color);
 	}
 }
 
@@ -43,8 +44,8 @@ void NGon::drawInfill(M5Canvas *display, const float camposX, const float campos
 		if (corners[i].y > maxY) maxY = corners[i].y;
 	}
 
-	minY = std::max(minY, (int)camposY);
-	maxY = std::min(maxY, (int)camposY+135);
+	minY = std::max(minY, (int) camposY);
+	maxY = std::min(maxY, (int) camposY + 135);
 
 	for (int y = minY; y <= maxY; y++) {
 		std::vector<int> xPoints;
@@ -66,9 +67,8 @@ void NGon::drawInfill(M5Canvas *display, const float camposX, const float campos
 
 void Line::drawOutline(M5Canvas *display, const float camposX, const float camposY) const {
 	for (int i = 1; i < points.size(); ++i) {
-
 		display->drawLine(points[i - 1].x - camposX, points[i - 1].y - camposY, points[i].x - camposX,
-							points[i].y - camposY, color);
+						points[i].y - camposY, color);
 	}
 }
 

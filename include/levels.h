@@ -9,10 +9,12 @@ void loadLevel();
 
 void testLevel();
 
-void first();
+void threadTheNeedle();
 
-void second();
+void theLoop();
 
 void greenHell();
+
+void italianChicane();
 
 #endif //M5RALLY_LEVELS_H
