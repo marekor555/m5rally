@@ -12,6 +12,7 @@ bool justPressed = false;
 std::vector<String> options = {
 	"Load level",
 	"Green hell (GT)",
+	"Grabowka Poland",
 	"Italian chicane (GT)",
 	"Thread the needle",
 	"The loop",
@@ -30,6 +31,7 @@ void enterSleep() {
 void (*results[])() = {
 	loadLevel,
 	greenHell,
+	grabowkaPL,
 	italianChicane,
 	threadTheNeedle,
 	theLoop,
@@ -60,10 +62,9 @@ void loop() {
 					if (option >= options.size())
 						option = 0;
 					break;
-				case '/':
-					results[option]();
 			}
 		}
+		if (status.enter) results[option]();
 		while (M5Cardputer.Keyboard.isPressed())
 			M5Cardputer.update();
 	}

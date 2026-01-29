@@ -17,4 +17,6 @@ void greenHell();
 
 void italianChicane();
 
+void grabowkaPL();
+
 #endif //M5RALLY_LEVELS_H
