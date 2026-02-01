@@ -9,7 +9,9 @@
 
 void debounceKeyboard();
 
-String scrollTextArrHighlight(std::vector<String> msg, bool scrollX, int mainColor, int extraColor);
+String scrollTextArrHighlight(const std::vector<String> &msg, bool scrollX, int mainColor, int extraColor);
+
+void selectFunction(const std::vector<String> &descriptions, void (*functions[])());
 
 bool isVisible(float x, float y, float camposX, float camposY, float margin);
 

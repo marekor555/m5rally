@@ -38,7 +38,66 @@ bool intersectScreen(const float x1, const float y1, const float x2, const float
 	return true;
 }
 
-String scrollTextArrHighlight(const std::vector<String> msg, bool scrollX, int mainColor, int extraColor) {
+void selectFunction(const std::vector<String> &descriptions, void (*functions[])()) {
+	int option = 0;
+	while (true) {
+		M5Cardputer.update();
+		if (M5Cardputer.Keyboard.isPressed()) {
+			const auto status = M5Cardputer.Keyboard.keysState();
+			for (const char key: status.word) {
+				switch (key) {
+					case ';':
+						option--;
+						if (option < 0)
+							option = descriptions.size() - 1;
+						break;
+					case '.':
+						option++;
+						if (option >= descriptions.size())
+							option = 0;
+						break;
+					default: ;
+				}
+			}
+			if (status.enter) {
+				functions[option]();
+				return;
+			}
+			while (M5Cardputer.Keyboard.isPressed())
+				M5Cardputer.update();
+		}
+		M5Canvas canvas(&M5.Lcd);
+		canvas.createSprite(240, 135);
+		canvas.fillScreen(TFT_BLACK);
+		canvas.setTextColor(TFT_WHITE, TFT_BLACK);
+		int previous = option - 1;
+		if (previous < 0)
+			previous = descriptions.size() - 1;
+		if (previous >= descriptions.size())
+			previous = 0;
+		int next = option + 1;
+		if (next < 0)
+			next = descriptions.size() - 1;
+		if (next >= descriptions.size())
+			next = 0;
+
+		canvas.setTextSize(2);
+		canvas.drawCenterString(descriptions[option], M5Cardputer.Display.width() / 2,
+								M5Cardputer.Lcd.height() / 2);
+
+		canvas.setTextSize(1);
+		canvas.setTextColor(TFT_DARKGREY, TFT_BLACK);
+		canvas.drawCenterString(descriptions[previous], M5Cardputer.Lcd.width() / 2,
+								M5Cardputer.Lcd.height() * 0.25);
+		canvas.drawCenterString(descriptions[next], M5Cardputer.Lcd.width() / 2,
+								M5Cardputer.Lcd.height() * 0.75);
+
+		canvas.pushSprite(0, 0);
+		canvas.deleteSprite();
+	}
+}
+
+String scrollTextArrHighlight(const std::vector<String> &msg, const bool scrollX, const int mainColor, const int extraColor) {
 	debounceKeyboard();
 	M5Cardputer.Lcd.setTextColor(mainColor);
 	int posx = 1, posy = 0;
@@ -48,7 +107,7 @@ String scrollTextArrHighlight(const std::vector<String> msg, bool scrollX, int m
 		M5Cardputer.update();
 		if (M5Cardputer.Keyboard.isPressed()) {
 			const Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
-			if (status.word.size() > 0) {
+			if (!status.word.empty()) {
 				switch (status.word[0]) {
 					case ';':
 						if (posy <= -1) {
@@ -74,6 +133,7 @@ String scrollTextArrHighlight(const std::vector<String> msg, bool scrollX, int m
 							change = true;
 						}
 						break;
+					default: ;
 				}
 			}
 			if (status.opt || status.enter) {

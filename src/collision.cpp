@@ -13,10 +13,10 @@ void NGon::fromRectangle(float cx, float cy, float w, float h, float angle) {
 
 	corners.clear();
 
-	corners.push_back(Pos2D(cx - w / 2 * cos0 + h / 2 * sin0, cy - w / 2 * sin0 - h / 2 * cos0));
-	corners.push_back(Pos2D(cx + w / 2 * cos0 + h / 2 * sin0, cy + w / 2 * sin0 - h / 2 * cos0));
-	corners.push_back(Pos2D(cx + w / 2 * cos0 - h / 2 * sin0, cy + w / 2 * sin0 + h / 2 * cos0));
-	corners.push_back(Pos2D(cx - w / 2 * cos0 - h / 2 * sin0, cy - w / 2 * sin0 + h / 2 * cos0));
+	corners.emplace_back(cx - w / 2 * cos0 + h / 2 * sin0, cy - w / 2 * sin0 - h / 2 * cos0);
+	corners.emplace_back(cx + w / 2 * cos0 + h / 2 * sin0, cy + w / 2 * sin0 - h / 2 * cos0);
+	corners.emplace_back(cx + w / 2 * cos0 - h / 2 * sin0, cy + w / 2 * sin0 + h / 2 * cos0);
+	corners.emplace_back(cx - w / 2 * cos0 - h / 2 * sin0, cy - w / 2 * sin0 + h / 2 * cos0);
 }
 
 void NGon::drawOutline(M5Canvas *display, const float camposX, const float camposY) const {
@@ -44,8 +44,8 @@ void NGon::drawInfill(M5Canvas *display, const float camposX, const float campos
 		if (corners[i].y > maxY) maxY = corners[i].y;
 	}
 
-	minY = std::max(minY, (int) camposY);
-	maxY = std::min(maxY, (int) camposY + 135);
+	minY = std::max(minY, static_cast<int>(camposY));
+	maxY = std::min(maxY, static_cast<int>(camposY) + 135);
 
 	for (int y = minY; y <= maxY; y++) {
 		std::vector<int> xPoints;

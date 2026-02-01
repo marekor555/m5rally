@@ -122,8 +122,8 @@ void Car::draw(M5Canvas *display, const float camposX, const float camposY) cons
 	canvas.fillScreen(TFT_BLACK);
 	canvas.fillRoundRect(0, 0, CAR_WIDTH, CAR_HEIGHT, CAR_WIDTH / 10, TFT_NAVY);
 	canvas.fillRoundRect(0, 0, CAR_WIDTH, CAR_HEIGHT / 4, CAR_WIDTH / 20, TFT_BLUE);
-	canvas.drawWideLine(CAR_WIDTH / 2, 0, CAR_WIDTH / 2, CAR_HEIGHT, CAR_HEIGHT / 6, TFT_NAVY);
-	canvas.drawWideLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, CAR_HEIGHT / 10, TFT_YELLOW);
+	canvas.drawWideLine(CAR_WIDTH / 2, 0, CAR_WIDTH / 2, CAR_HEIGHT, CAR_HEIGHT / 6.0, TFT_NAVY);
+	canvas.drawWideLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, CAR_HEIGHT / 10.0, TFT_YELLOW);
 	canvas.drawLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, TFT_NAVY);
 	canvas.pushRotateZoomWithAA(display, posX - camposX, posY - camposY, angle, 1.0, 1.0);
 	canvas.deleteSprite();

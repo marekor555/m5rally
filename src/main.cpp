@@ -6,18 +6,41 @@
 #include <M5GFX.h>
 
 #include "levels.h"
+#include "utils.h"
 
-bool justPressed = false;
+void listLevels();
+void enterSleep();
 
 std::vector<String> options = {
 	"Load level",
+	"Levels",
+	"Enter sleep",
+};
+
+void (*results[])() = {
+	loadLevel,
+	listLevels,
+	enterSleep,
+};
+
+std::vector<String> levelNames = {
+	"exit",
 	"Green hell (GT)",
 	"Grabowka Poland",
 	"Italian chicane (GT)",
 	"Thread the needle",
 	"The loop",
-	"Test level",
-	"Enter sleep",
+	"Test level"
+};
+
+void (*levels[])() = {
+	[]{},
+	greenHell,
+	grabowkaPL,
+	italianChicane,
+	threadTheNeedle,
+	theLoop,
+	testLevel,
 };
 
 void enterSleep() {
@@ -28,18 +51,10 @@ void enterSleep() {
 		M5Cardputer.update();
 }
 
-void (*results[])() = {
-	loadLevel,
-	greenHell,
-	grabowkaPL,
-	italianChicane,
-	threadTheNeedle,
-	theLoop,
-	testLevel,
-	enterSleep,
-};
-
-int option = 0;
+void listLevels() {
+	debounceKeyboard();
+	selectFunction(levelNames, levels);
+}
 
 void setup() {
 	M5Cardputer.begin();
@@ -47,53 +62,6 @@ void setup() {
 }
 
 void loop() {
-	M5Cardputer.update();
-	if (M5Cardputer.Keyboard.isPressed()) {
-		const auto status = M5Cardputer.Keyboard.keysState();
-		for (const char key: status.word) {
-			switch (key) {
-				case ';':
-					option--;
-					if (option < 0)
-						option = options.size() - 1;
-					break;
-				case '.':
-					option++;
-					if (option >= options.size())
-						option = 0;
-					break;
-			}
-		}
-		if (status.enter) results[option]();
-		while (M5Cardputer.Keyboard.isPressed())
-			M5Cardputer.update();
-	}
-	M5Canvas canvas(&M5.Lcd);
-	canvas.createSprite(240, 135);
-	canvas.fillScreen(TFT_BLACK);
-	canvas.setTextColor(TFT_WHITE, TFT_BLACK);
-	int previous = option - 1;
-	if (previous < 0)
-		previous = options.size() - 1;
-	if (previous >= options.size())
-		previous = 0;
-	int next = option + 1;
-	if (next < 0)
-		next = options.size() - 1;
-	if (next >= options.size())
-		next = 0;
-
-	canvas.setTextSize(2);
-	canvas.drawCenterString(options[option], M5Cardputer.Display.width() / 2,
-							M5Cardputer.Lcd.height() / 2);
-
-	canvas.setTextSize(1);
-	canvas.setTextColor(TFT_DARKGREY, TFT_BLACK);
-	canvas.drawCenterString(options[previous], M5Cardputer.Lcd.width() / 2,
-							M5Cardputer.Lcd.height() * 0.25);
-	canvas.drawCenterString(options[next], M5Cardputer.Lcd.width() / 2,
-							M5Cardputer.Lcd.height() * 0.75);
-
-	canvas.pushSprite(0, 0);
-	canvas.deleteSprite();
+	selectFunction(options, results);
+	debounceKeyboard();
 }
