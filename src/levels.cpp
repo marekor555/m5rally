@@ -59,6 +59,8 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 					case 'e':
 						car.handbrake = true;
 						break;
+					case '`':
+						return;
 				}
 			}
 		}

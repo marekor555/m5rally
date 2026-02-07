@@ -18,6 +18,7 @@ Simple demo [here](https://youtu.be/X6U41WTBWvQ?si=-CZuq-CXeDYT13Un)
 | `.` (Period) | Steer Right        |
 | `Q`          | Brake              |
 | `E`          | Handbrake (Drift)  |
+| `esc`        | Exit level         |
 
 
 ## 📜 License
