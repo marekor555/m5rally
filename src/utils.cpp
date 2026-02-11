@@ -40,6 +40,8 @@ bool intersectScreen(const float x1, const float y1, const float x2, const float
 
 void selectFunction(const std::vector<String> &descriptions, void (*functions[])()) {
 	int option = 0;
+	M5Canvas canvas(&M5.Lcd);
+	canvas.createSprite(240, 135);
 	while (true) {
 		M5Cardputer.update();
 		if (M5Cardputer.Keyboard.isPressed()) {
@@ -66,8 +68,6 @@ void selectFunction(const std::vector<String> &descriptions, void (*functions[])
 			while (M5Cardputer.Keyboard.isPressed())
 				M5Cardputer.update();
 		}
-		M5Canvas canvas(&M5.Lcd);
-		canvas.createSprite(240, 135);
 		canvas.fillScreen(TFT_BLACK);
 		canvas.setTextColor(TFT_WHITE, TFT_BLACK);
 		int previous = option - 1;
@@ -93,7 +93,6 @@ void selectFunction(const std::vector<String> &descriptions, void (*functions[])
 								M5Cardputer.Lcd.height() * 0.75);
 
 		canvas.pushSprite(0, 0);
-		canvas.deleteSprite();
 	}
 }
 

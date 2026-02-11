@@ -114,19 +114,18 @@ void Car::init(const float x, const float y, const float a) {
 	posX = x;
 	posY = y;
 	angle = a;
+	canvas = new M5Canvas(&M5.Lcd);
+	canvas->createSprite(CAR_WIDTH, CAR_HEIGHT);
 }
 
 void Car::draw(M5Canvas *display, const float camposX, const float camposY) const {
-	M5Canvas canvas(display);
-	canvas.createSprite(CAR_WIDTH, CAR_HEIGHT);
-	canvas.fillScreen(TFT_BLACK);
-	canvas.fillRoundRect(0, 0, CAR_WIDTH, CAR_HEIGHT, CAR_WIDTH / 10, TFT_NAVY);
-	canvas.fillRoundRect(0, 0, CAR_WIDTH, CAR_HEIGHT / 4, CAR_WIDTH / 20, TFT_BLUE);
-	canvas.drawWideLine(CAR_WIDTH / 2, 0, CAR_WIDTH / 2, CAR_HEIGHT, CAR_HEIGHT / 6.0, TFT_NAVY);
-	canvas.drawWideLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, CAR_HEIGHT / 10.0, TFT_YELLOW);
-	canvas.drawLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, TFT_NAVY);
-	canvas.pushRotateZoomWithAA(display, posX - camposX, posY - camposY, angle, 1.0, 1.0);
-	canvas.deleteSprite();
+	canvas->fillScreen(TFT_BLACK);
+	canvas->fillRoundRect(0, 0, CAR_WIDTH, CAR_HEIGHT, CAR_WIDTH / 10, TFT_NAVY);
+	canvas->fillRoundRect(0, 0, CAR_WIDTH, CAR_HEIGHT / 4, CAR_WIDTH / 20, TFT_BLUE);
+	canvas->drawWideLine(CAR_WIDTH / 2, 0, CAR_WIDTH / 2, CAR_HEIGHT, CAR_HEIGHT / 6.0, TFT_NAVY);
+	canvas->drawWideLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, CAR_HEIGHT / 10.0, TFT_YELLOW);
+	canvas->drawLine(0, CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT / 2, TFT_NAVY);
+	canvas->pushRotateZoomWithAA(display, posX - camposX, posY - camposY, angle, 1.0, 1.0);
 }
 
 void Car::drawUI(M5Canvas *display, const float delta) const {

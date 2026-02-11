@@ -16,6 +16,7 @@ public:
 			angle = 90, velocity = 0, steer = 0;
 	bool handbrake = false;
 	float runTime = 0;
+	M5Canvas *canvas;
 
 	bool tick(const std::vector<Box> &colliders, const std::vector<NGon> &barriers, const std::vector<Line> &lines,
 			const Line &finishLine, float delta);

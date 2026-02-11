@@ -1,5 +1,7 @@
 #include "particle.h"
 
+#include <utils.h>
+
 
 void Particle::tick(const float delta) {
 	time += delta;
@@ -33,15 +35,18 @@ bool ParticleSpawner::tick(const float delta) {
 
 void ParticleSpawner::draw(M5Canvas *display, const float camposX, const float camposY) const {
 	for (const Particle &particle: particles) {
-		particle.draw(display, camposX, camposY);
+		if (isVisible(particle.position.x, particle.position.y, camposX, camposY, 20))
+			particle.draw(display, camposX, camposY);
 	}
 }
 
 void ParticleSpawner::drawLine(M5Canvas *display, const float camposX, const float camposY, const float width) const {
 	for (int i = 1; i < particles.size(); i++) {
-		display->drawWideLine(particles[i - 1].position.x - camposX, particles[i - 1].position.y - camposY,
-							particles[i].position.x - camposX, particles[i].position.y - camposY,
-							width * ((particles[i].lifetime - particles[i].time) / particles[i].lifetime),
-							particles[i].color);
+		if (intersectScreen(particles[i - 1].position.x, particles[i - 1].position.y, particles[i].position.x,
+							particles[i].position.y, camposX, camposY))
+			display->drawWideLine(particles[i - 1].position.x - camposX, particles[i - 1].position.y - camposY,
+								particles[i].position.x - camposX, particles[i].position.y - camposY,
+								width * ((particles[i].lifetime - particles[i].time) / particles[i].lifetime),
+								particles[i].color);
 	}
 }

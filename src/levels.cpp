@@ -23,6 +23,8 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 			const Line &finishLine) {
 	unsigned long frameStart = millis();
 	ParticleSpawner particle_spawner(MAX_CAR_PARTICLES, 0);
+	M5Canvas canvas(&M5.Lcd);
+	canvas.createSprite(240, 135);
 	while (true) {
 		const unsigned long now = millis();
 		float delta = static_cast<float>(now - frameStart) / 1000;
@@ -34,7 +36,6 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 			particle_spawner.spawn(car.posX, car.posY, 3, 7, TFT_BLACK);
 		}
 		M5Cardputer.update();
-		M5Canvas canvas(&M5.Lcd);
 
 		car.handbrake = false;
 		if (M5Cardputer.Keyboard.isPressed()) {
@@ -61,17 +62,18 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 						break;
 					case '`':
 						return;
+					default:
+						break;
 				}
 			}
 		}
-		canvas.createSprite(240, 135);
 		canvas.fillScreen(GROUND_COLOR);
 		canvas.setTextColor(TFT_WHITE, TFT_BLACK);
 		canvas.setTextSize(1);
 
 		const float
-				camposX = car.posX - M5Cardputer.Lcd.width() / 2,
-				camposY = car.posY - M5Cardputer.Lcd.height() / 2;
+				camposX = car.posX - M5Cardputer.Lcd.width() / 2.0,
+				camposY = car.posY - M5Cardputer.Lcd.height() / 2.0;
 
 
 		for (const NGon &barrier: barriers) {
@@ -92,7 +94,6 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 		car.drawUI(&canvas, delta);
 
 		canvas.pushSprite(0, 0);
-		canvas.deleteSprite();
 
 		const unsigned long end = millis();
 		if (end - now < FRAME_TIME_MS) {
