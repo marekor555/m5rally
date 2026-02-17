@@ -30,6 +30,50 @@ struct Wall {
 	double distance;
 };
 
+void addWalls(const std::vector<Pos2D> &corners, std::vector<Wall> &walls, const double sinr, const double cosr, const double carX, const double carY, const double centerX, const double centerY, const int ignoreLast = 0) {
+	const int pointsCount = corners.size();
+	std::vector<Pos2D> translated(pointsCount);
+	for (int i = 0; i < corners.size(); i++) {
+		const double xRel = corners[i].x - carX;
+		const double yRel = corners[i].y - carY;
+		const double rx = xRel * cosr + yRel * sinr;
+		const double ry = -xRel * sinr + yRel * cosr;
+		translated[i] = Pos2D(rx, ry);
+	}
+
+	for (int i = 0; i < pointsCount-ignoreLast; i++) {
+		Pos2D point1 = translated[i];
+		Pos2D point2 = translated[(i+1) % pointsCount];
+
+		const double dx = point1.x - point2.x;
+		const double dy = point1.y - point2.y;
+
+		const double length = sqrt(dx*dx + dy*dy);
+		const double midY = (point1.y + point2.y) / 2;
+		const double midX = (point2.x + point2.y) / 2;
+		if (sqrt(midY*midY + midX*midX) > 1000) continue;
+
+		// if (point1.y > 2500 || point2.y > 2500) continue;
+		if (point1.y < NEAR && point2.y < NEAR) continue;
+
+		if (point1.y < NEAR || point2.y < NEAR) clipLine(point1, point2, NEAR);
+
+		const double screenX1 = centerX - (point1.x * (FOV / point1.y));
+		const double screenX2 = centerX - (point2.x * (FOV / point2.y));
+
+		if (!isVisible(screenX1, centerY, 0, 0, length)  && !isVisible(screenX2, centerY, 0, 0, length)) continue;
+
+		const std::array positions = {
+			Pos2D(screenX1, centerY - (WALL_HEIGHT * (FOV / point1.y))*0.25),
+			Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))*0.75),
+			Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))*0.75),
+			Pos2D(screenX2, centerY - (WALL_HEIGHT * (FOV / point2.y))*0.25),
+		};
+
+		walls.push_back(Wall{positions, midY});
+	}
+}
+
 void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &barriers, const std::vector<Line> &lines,
 			const Line &finishLine) {
 	unsigned long frameStart = millis();
@@ -37,9 +81,6 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 	M5Canvas canvas(&M5.Lcd);
 	canvas.createSprite(240, 135);
 
-	const int pointsCount = barriers[0].corners.size();
-
-	std::vector<Pos2D> translated(pointsCount);
 	std::vector<Wall> walls;
 	const double screenX = M5Cardputer.Lcd.width();
 	const double screenY = M5Cardputer.Lcd.height();
@@ -121,53 +162,21 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 			car.draw(&canvas, camposX, camposY);
 		} else {
 			// 3d projection (ONLY FIRST BARRIER)!!!
-			translated.clear();
 			walls.clear();
-			translated.resize(pointsCount);
 			const double rad = (car.angle+180) * DEG_TO_RAD;
 			const double sinr = sin(rad);
 			const double cosr = cos(rad);
 
-			for (int i = 0; i < barriers[0].corners.size(); i++) {
-				const double xRel = barriers[0].corners[i].x - car.posX;
-				const double yRel = barriers[0].corners[i].y - car.posY;
-				const double rx = xRel * cosr + yRel * sinr;
-				const double ry = -xRel * sinr + yRel * cosr;
-				translated[i] = Pos2D(rx, ry);
+			for (const NGon &barrier: barriers) {
+				addWalls(barrier.corners, walls, sinr, cosr, car.posX, car.posY, centerX, centerY);
 			}
-
-
-
-			for (int i = 0; i <= pointsCount-1; i++) {
-				Pos2D point1 = translated[i];
-				Pos2D point2 = translated[(i+1) % pointsCount];
-
-				const double dx = point1.x - point2.x;
-				const double dy = point1.y - point2.y;
-
-				const double length = sqrt(dx*dx + dy*dy);
-
-				if (point1.y > 5000 || point2.y > 5000) continue;
-				if (point1.y < NEAR && point2.y < NEAR) continue;
-
-				if (point1.y < NEAR || point2.y < NEAR) clipLine(point1, point2, NEAR);
-
-				// canvas.drawWideLine(point1.x+centerX, point1.y+centerY*0.25, point2.x+centerX, 2, point2.y+centerY*0.25, TFT_GREENYELLOW);
-
-				const double screenX1 = centerX - (point1.x * (FOV / point1.y));
-				const double screenX2 = centerX - (point2.x * (FOV / point2.y));
-
-				if (!isVisible(screenX1, centerY, 0, 0, length)  && !isVisible(screenX2, centerY, 0, 0, length)) continue;
-
-				std::array positions = {
-					Pos2D(screenX1, centerY - (WALL_HEIGHT * (FOV / point1.y))*0.25),
-					Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))*0.75),
-					Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))*0.75),
-					Pos2D(screenX2, centerY - (WALL_HEIGHT * (FOV / point2.y))*0.25),
-				};
-				const double midY = (point1.y + point2.y) / 2;
-
-				walls.push_back(Wall{positions, midY});
+			for (const Box &box: boxes) {
+				NGon b;
+				b.fromRectangle(box.posX, box.posY, box.width, box.height, box.angle);
+				addWalls(b.corners, walls, sinr, cosr, car.posX, car.posY, centerX, centerY);
+			}
+			for (const Line &line: lines) {
+				addWalls(line.points, walls, sinr, cosr, car.posX, car.posY, centerX, centerY, 1);
 			}
 
 			std::ranges::sort(walls, [](const Wall& a, const Wall& b) {
