@@ -6,6 +6,8 @@
 #define M5RALLY_UTILS_H
 #include <Arduino.h>
 #include <vector>
+#include <collision.h>
+#include <M5Cardputer.h>
 
 /*
  * wait for all keys to be released
@@ -51,5 +53,22 @@ bool isVisible(float x, float y, float camposX, float camposY, float margin);
  * @return
  */
 bool intersectScreen(float x1, float y1, float x2, float y2, float camposX, float camposY);
+
+/**
+ * draw a concave quadrilateral
+ * @param canvas canvas to draw on
+ * @param positions positions of corners of the quad
+ * @param color color to fill
+ */
+void drawConcaveQuad(M5Canvas *canvas, const Pos2D positions[4], uint16_t color);
+
+/**
+ * clip both points so their y values aren't behind the camera
+ * (used for 3d projection, see levels.cpp)
+ * @param point1 first point
+ * @param point2 second point
+ * @param near point to clip to (usually a small value like 0.1)
+ */
+void clipLine(Pos2D &point1, Pos2D &point2, double near);
 
 #endif //M5RALLY_UTILS_H

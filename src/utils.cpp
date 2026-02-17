@@ -164,3 +164,20 @@ String scrollTextArrHighlight(const std::vector<String> &msg, const bool scrollX
 	}
 	return msg[highlight];
 }
+
+void drawConcaveQuad(M5Canvas *canvas, const Pos2D positions[4], const uint16_t color) {
+	canvas->fillTriangle(positions[0].x, positions[0].y, positions[1].x, positions[1].y, positions[2].x, positions[2].y, color);
+	canvas->fillTriangle(positions[0].x, positions[0].y, positions[2].x, positions[2].y, positions[3].x, positions[3].y, color);
+}
+
+void clipLine(Pos2D &point1, Pos2D &point2, const double near) {
+	if (point1.y < near && point2.y >= near) {
+		const double t = (near - point1.y) / (point2.y - point1.y);
+		point1.x = point1.x + t * (point2.x - point1.x);
+		point1.y = near;
+	} else if (point2.y < near && point1.y >= near) {
+		const double t = (near - point2.y) / (point1.y - point2.y);
+		point2.x = point2.x + t * (point1.x - point2.x);
+		point2.y = near;
+	}
+}

@@ -19,12 +19,28 @@
 #define FRAME_TIME_MS 10 // 16ms -> abt. 60 fps
 #define MAX_CAR_PARTICLES 400
 
+// 3d view conf
+#define FOV 300
+#define	WALL_HEIGHT 20
+#define NEAR 1
+
+
 void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &barriers, const std::vector<Line> &lines,
 			const Line &finishLine) {
 	unsigned long frameStart = millis();
 	ParticleSpawner particle_spawner(MAX_CAR_PARTICLES, 0);
 	M5Canvas canvas(&M5.Lcd);
 	canvas.createSprite(240, 135);
+
+	const int pointsCount = barriers[0].corners.size();
+
+	std::vector<Pos2D> translated(pointsCount);
+	const double screenX = M5Cardputer.Lcd.width();
+	const double screenY = M5Cardputer.Lcd.height();
+	const double centerX = screenX/2;
+	const double centerY = screenY/2;
+
+	bool view2d = true;
 	while (true) {
 		const unsigned long now = millis();
 		float delta = static_cast<float>(now - frameStart) / 1000;
@@ -62,6 +78,12 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 						break;
 					case '`':
 						return;
+					case '2':
+						view2d = true;
+						break;
+					case '3':
+						view2d = false;
+						break;
 					default:
 						break;
 				}
@@ -72,24 +94,77 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 		canvas.setTextSize(1);
 
 		const float
-				camposX = car.posX - M5Cardputer.Lcd.width() / 2.0,
-				camposY = car.posY - M5Cardputer.Lcd.height() / 2.0;
+				camposX = car.posX - screenX / 2.0,
+				camposY = car.posY - screenY / 2.0;
 
+		// 2d view
+		if (view2d) {
+			for (const NGon &barrier: barriers) {
+				barrier.drawInfill(&canvas, camposX, camposY);
+				barrier.drawOutline(&canvas, camposX, camposY);
+			}
+			for (const Box &box: boxes) {
+				box.draw(&canvas, camposX, camposY);
+			}
+			for (const Line &line: lines) {
+				line.drawOutline(&canvas, camposX, camposY);
+			}
+			finishLine.drawOutline(&canvas, camposX, camposY);
+			particle_spawner.drawLine(&canvas, camposX, camposY, 3);
 
-		for (const NGon &barrier: barriers) {
-			barrier.drawInfill(&canvas, camposX, camposY);
-			barrier.drawOutline(&canvas, camposX, camposY);
-		}
-		for (const Box &box: boxes) {
-			box.draw(&canvas, camposX, camposY);
-		}
-		for (const Line &line: lines) {
-			line.drawOutline(&canvas, camposX, camposY);
-		}
-		finishLine.drawOutline(&canvas, camposX, camposY);
-		particle_spawner.drawLine(&canvas, camposX, camposY, 3);
+			car.draw(&canvas, camposX, camposY);
+		} else {
+			// 3d projection (ONLY FIRST BARRIER)!!!
+			translated.clear();
+			translated.resize(pointsCount);
+			const double rad = (car.angle+180) * DEG_TO_RAD;
+			const double sinr = sin(rad);
+			const double cosr = cos(rad);
 
-		car.draw(&canvas, camposX, camposY);
+			for (int i = 0; i < barriers[0].corners.size(); i++) {
+				const double xRel = barriers[0].corners[i].x - car.posX;
+				const double yRel = barriers[0].corners[i].y - car.posY;
+				const double rx = xRel * cosr + yRel * sinr;
+				const double ry = -xRel * sinr + yRel * cosr;
+				translated[i] = Pos2D(rx, ry);
+			}
+
+			canvas.fillScreen(BARRIER_INFILL);
+			canvas.fillRect(0,0, screenX, screenY/2, TFT_BLUE);
+
+			for (int i = 0; i <= pointsCount-1; i++) {
+				Pos2D point1 = translated[i];
+				Pos2D point2 = translated[(i+1) % pointsCount];
+
+				const double dx = point1.x - point2.x;
+				const double dy = point1.x - point2.x;
+
+				const double length = sqrt(dx*dx + dy*dy);
+
+				if (point1.y > 10000 || point2.y > 10000) continue;
+				if (point1.y < NEAR && point2.y < NEAR) continue;
+
+				if (point1.y < NEAR || point2.y < NEAR) clipLine(point1, point2, NEAR);
+
+				// canvas.drawWideLine(point1.x+centerX, point1.y+centerY*0.25, point2.x+centerX, 2, point2.y+centerY*0.25, TFT_GREENYELLOW);
+
+				const double screenX1 = centerX - (point1.x * (FOV / point1.y));
+				const double screenX2 = centerX - (point2.x * (FOV / point2.y));
+
+				if (!isVisible(screenX1, centerY, 0, 0, length)  && !isVisible(screenX2, centerY, 0, 0, length)) continue;
+
+				const Pos2D positions[4] = {
+					Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))*0.25),
+					Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))),
+					Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))),
+					Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))*0.25),
+				};
+
+				drawConcaveQuad(&canvas, positions, BARRIER_COLOR);
+				canvas.drawLine(positions[1].x, positions[1].y, positions[2].x, positions[2].y, TFT_BLACK); // TODO: contours are wrong -> go to half and draw other way after?
+				canvas.drawLine(positions[0].x, positions[0].y, positions[3].x, positions[3].y, TFT_BLACK);
+			}
+		}
 
 		car.drawUI(&canvas, delta);
 
