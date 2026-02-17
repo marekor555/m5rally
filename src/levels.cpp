@@ -20,10 +20,15 @@
 #define MAX_CAR_PARTICLES 400
 
 // 3d view conf
-#define FOV 300
+#define FOV 100
 #define	WALL_HEIGHT 20
 #define NEAR 1
 
+
+struct Wall {
+	std::array<Pos2D, 4> positions;
+	double distance;
+};
 
 void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &barriers, const std::vector<Line> &lines,
 			const Line &finishLine) {
@@ -35,6 +40,7 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 	const int pointsCount = barriers[0].corners.size();
 
 	std::vector<Pos2D> translated(pointsCount);
+	std::vector<Wall> walls;
 	const double screenX = M5Cardputer.Lcd.width();
 	const double screenY = M5Cardputer.Lcd.height();
 	const double centerX = screenX/2;
@@ -116,6 +122,7 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 		} else {
 			// 3d projection (ONLY FIRST BARRIER)!!!
 			translated.clear();
+			walls.clear();
 			translated.resize(pointsCount);
 			const double rad = (car.angle+180) * DEG_TO_RAD;
 			const double sinr = sin(rad);
@@ -129,19 +136,18 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 				translated[i] = Pos2D(rx, ry);
 			}
 
-			canvas.fillScreen(BARRIER_INFILL);
-			canvas.fillRect(0,0, screenX, screenY/2, TFT_BLUE);
+
 
 			for (int i = 0; i <= pointsCount-1; i++) {
 				Pos2D point1 = translated[i];
 				Pos2D point2 = translated[(i+1) % pointsCount];
 
 				const double dx = point1.x - point2.x;
-				const double dy = point1.x - point2.x;
+				const double dy = point1.y - point2.y;
 
 				const double length = sqrt(dx*dx + dy*dy);
 
-				if (point1.y > 10000 || point2.y > 10000) continue;
+				if (point1.y > 5000 || point2.y > 5000) continue;
 				if (point1.y < NEAR && point2.y < NEAR) continue;
 
 				if (point1.y < NEAR || point2.y < NEAR) clipLine(point1, point2, NEAR);
@@ -153,16 +159,30 @@ void runLevel(Car car, const std::vector<Box> &boxes, const std::vector<NGon> &b
 
 				if (!isVisible(screenX1, centerY, 0, 0, length)  && !isVisible(screenX2, centerY, 0, 0, length)) continue;
 
-				const Pos2D positions[4] = {
-					Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))*0.25),
-					Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))),
-					Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))),
-					Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))*0.25),
+				std::array positions = {
+					Pos2D(screenX1, centerY - (WALL_HEIGHT * (FOV / point1.y))*0.25),
+					Pos2D(screenX1, centerY + (WALL_HEIGHT * (FOV / point1.y))*0.75),
+					Pos2D(screenX2, centerY + (WALL_HEIGHT * (FOV / point2.y))*0.75),
+					Pos2D(screenX2, centerY - (WALL_HEIGHT * (FOV / point2.y))*0.25),
 				};
+				const double midY = (point1.y + point2.y) / 2;
 
-				drawConcaveQuad(&canvas, positions, BARRIER_COLOR);
-				canvas.drawLine(positions[1].x, positions[1].y, positions[2].x, positions[2].y, TFT_BLACK); // TODO: contours are wrong -> go to half and draw other way after?
+				walls.push_back(Wall{positions, midY});
+			}
+
+			std::ranges::sort(walls, [](const Wall& a, const Wall& b) {
+				return a.distance > b.distance;
+			});
+
+			canvas.fillScreen(GROUND_COLOR);
+			canvas.fillRect(0,0, screenX, screenY/2, TFT_BLUE);
+
+			for (const auto [positions, _] : walls) {
+				drawConcaveQuad(&canvas, positions.data(), BARRIER_COLOR);
+				canvas.drawLine(positions[1].x, positions[1].y, positions[2].x, positions[2].y, TFT_BLACK);
 				canvas.drawLine(positions[0].x, positions[0].y, positions[3].x, positions[3].y, TFT_BLACK);
+				canvas.drawLine(positions[0].x, positions[0].y, positions[1].x, positions[1].y, TFT_BLACK);
+				canvas.drawLine(positions[3].x, positions[3].y, positions[2].x, positions[2].y, TFT_BLACK);
 			}
 		}
 
